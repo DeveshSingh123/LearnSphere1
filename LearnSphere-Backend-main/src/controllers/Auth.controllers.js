@@ -51,14 +51,14 @@ const sendOTP = asycnHandler(async (req,res) => {
             upperCaseAlphabets: false,
             specialChars: false
         })
-        const result = await OTP.findOne({otp:otp})
+        let result = await OTP.findOne({otp:otp})
         while(result) {
             otp = otpGenerator.generate(6,{
                 lowerCaseAlphabets: false,
                 upperCaseAlphabets: false,
                 specialChars: false
             })
-          result = await OTP.findOne({otp:otp})
+            result = await OTP.findOne({otp:otp})
         }
     
         const otpPayload = {email,otp}
@@ -74,8 +74,10 @@ const sendOTP = asycnHandler(async (req,res) => {
                .status(200)
                .json(new ApiResponse(200,otpBody,"Otp generated successfully"))
     } catch (error) {
-        console.log("ERROR While Generating OTP: ",error.message);
-        throw new ApiErrors(501,"Something went wrong")
+        console.log("ERROR While Generating OTP: ", error.message);
+        const statusCode = error.statusCode || 500
+        const message = error.message || "Something went wrong while generating OTP"
+        return res.status(statusCode).json(new ApiResponse(statusCode, null, message))
     }
 })
 

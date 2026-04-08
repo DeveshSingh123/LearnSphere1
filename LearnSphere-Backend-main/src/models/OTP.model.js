@@ -25,7 +25,7 @@ async function sendVerificationEmail(email, otp) {
         // const some = otpTemplate(otp)
         console.log("Email sent Successfully: ", mailResponse);
     } catch (error) {
-        throw new ApiErrors(500,error, "Error occurred while sending mail")
+        throw new ApiErrors(500, error.message || "Error occurred while sending mail")
     }
 }
 
