@@ -18,6 +18,8 @@ const allowedOrigins = process.env.ALLOWED_ORIGINS
         "https://learn-sphere-frontend-6mr9.vercel.app",
         "http://localhost:5173",
         "http://127.0.0.1:5173",
+        "http://localhost:5175",
+        "http://127.0.0.1:5175",
         "http://localhost:3000",
         "http://127.0.0.1:3000",
     ];
@@ -63,6 +65,19 @@ app.get("/", (req,res) => {
 		success: true,
 		message: "Your server is up and running ...",
 	});
+})
+
+// Global error handler
+app.use((err, req, res, next) => {
+    console.error(err)
+    const statusCode = err.statusCode || 500
+    const message = err.message || "Something went wrong"
+    return res.status(statusCode).json({
+        statusCode,
+        data: null,
+        message,
+        success: statusCode < 400,
+    })
 })
 
 export { app }

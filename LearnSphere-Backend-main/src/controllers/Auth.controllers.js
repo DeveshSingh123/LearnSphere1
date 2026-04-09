@@ -23,7 +23,7 @@ const generateAccessAndRefreshTokens = async (userId) => {
         const refreshToken = user.generateRefreshToken()
   
         // Saving in the database
-        User.refreshToken = refreshToken
+        user.refreshToken = refreshToken
         await user.save({ validateBeforeSave: false })
 
         return {accessToken,refreshToken}
@@ -112,14 +112,12 @@ const signUp = asycnHandler(async (req,res) => {
         // Find most recent otp saved in db
         // console.log("Printing otp ",otp);
         const recentOtp = await OTP.find({email}).sort({createdAt:-1}).limit(1)
-        console.log("Printing recent OTP: ",recentOtp[0].otp);
+        console.log("Printing recent OTP: ",recentOtp);
         if(recentOtp.length === 0) {
             throw new ApiErrors(401,"OTP not found")
         } else if(otp !== recentOtp[0].otp) {
             throw new ApiErrors(401,"OTP not matched")
         }
-        // Hash the password
-        const hashedPassword = await bcrypt.hash(password,10)
         // Create entry in db
         const additionalDetails = await Profile.create({
             gender: null,
@@ -131,8 +129,8 @@ const signUp = asycnHandler(async (req,res) => {
             firstName,
             lastName,
             email,
-            password: hashedPassword,
-            confirmPassword: hashedPassword,
+            password,
+            confirmPassword,
             accountType,
             contactNumber,
             additionalDetails: additionalDetails._id,
@@ -164,7 +162,7 @@ const login = asycnHandler(async (req,res) => {
             throw new ApiErrors(404,"User is not registered")
         }
         console.log("Password -> ",password);
-        const isPasswordValid = await user.isPassowrdCorrect(password)
+        const isPasswordValid = await user.isPasswordCorrect(password)
         console.log("Is Password valid -> ",isPasswordValid);
         if(!isPasswordValid) {
             throw new ApiErrors(401,"Invalid Password")
@@ -190,7 +188,10 @@ const login = asycnHandler(async (req,res) => {
                )
     } catch (error) {
         console.log("ERROR MESSAGE: ",error.message)
-        throw new ApiErrors(500,"Something went wrong while loging in.")
+        if (error instanceof ApiErrors) {
+            throw error
+        }
+        throw new ApiErrors(error.statusCode || 500, error.message || "Something went wrong while logging in.")
     }
 })
 
@@ -213,7 +214,7 @@ const changePassword = asycnHandler(async (req,res) => {
         
         // const matchedPassord = true
         console.log("Printing confirmPassword -> ",user.confirmPassword)
-        const matchedPassord = await user.isPassowrdCorrect(oldPassword);
+        const matchedPassord = await user.isPasswordCorrect(oldPassword);
         // console.log("Printing hashedPassword -> ",matchedPassord)
         if(!matchedPassord) {
             throw new ApiErrors(400,"Old password is incorrect.")

@@ -84,16 +84,17 @@ const userSchema = new Schema(
 userSchema.pre("save", async function (next) {
     if(!this.isModified("password")) return next();
 
-    this.password = await bcrypt.hash(this.password,10)
+    this.password = await bcrypt.hash(this.password, 10)
+    this.confirmPassword = await bcrypt.hash(this.confirmPassword, 10)
     // await sendVerificationEmail(this.email, this.otp)
-    console.log("Printing this.password -> ",this.password)
+    console.log("Printing this.password -> ", this.password)
     next();
 })
 
 //Verifying the password
-userSchema.methods.isPassowrdCorrect = async function(password) {
+userSchema.methods.isPasswordCorrect = async function(password) {
     console.log(password," ",this.password);
-    return await bcrypt.compare(password,this.confirmPassword)
+    return await bcrypt.compare(password, this.password)
 }
 
 userSchema.methods.generateAccessToken = function() {
