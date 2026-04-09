@@ -73,7 +73,8 @@ export function updateProfile(refreshToken, formData) {
         }
         catch (error) {
             console.log("UPDATE_PROFILE_API API ERROR............", error)
-            toast.error("Could Not Update Profile")
+            const message = error?.response?.data?.message || error?.message || "Could Not Update Profile"
+            toast.error(message)
         }
         toast.dismiss(toastId)
     }

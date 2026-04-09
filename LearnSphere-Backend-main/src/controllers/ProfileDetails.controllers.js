@@ -8,7 +8,14 @@ import { Course } from "../models/Course.model.js"
 
 const updateProfileDetails = asycnHandler(async (req,res) => {
     try {
-        const {gender,dateOfBirth="",about="",contactNumber} = req.body
+        const {
+            firstName,
+            lastName,
+            gender,
+            dateOfBirth = "",
+            about = "",
+            contactNumber,
+        } = req.body
         const userId = req.user._id
         if(!gender || !contactNumber) {
             throw new ApiErrors(400,"Please fill all the required details.")
@@ -17,22 +24,24 @@ const updateProfileDetails = asycnHandler(async (req,res) => {
         const profileId = userDetails.additionalDetails
         const profileDetails = await Profile.findById(profileId)
 
+        if (firstName) userDetails.firstName = firstName
+        if (lastName) userDetails.lastName = lastName
         profileDetails.gender = gender
         profileDetails.dateOfBirth = dateOfBirth
         profileDetails.about = about
         profileDetails.contactNumber = contactNumber
 
-
-        await profileDetails.save()
+        await Promise.all([profileDetails.save(), userDetails.save()])
         const finalUserDetails = await User.findById(userId).populate("additionalDetails")
-        // const finalUserDetails = userDetails.populate("addtionalDetails")
-        // console.log("Printing user details -> ",finalUserDetails)
         return res
                .status(200)
                .json(new ApiResponse(200,finalUserDetails,"Profile updated successfully."))
     } catch (error) {
         console.log("ERROR MESSAGE: ", error.message)
-        throw new ApiErrors(500,"Something went wrong while updating profile details")
+        if (error instanceof ApiErrors) {
+            throw error
+        }
+        throw new ApiErrors(error.statusCode || 500, error.message || "Something went wrong while updating profile details")
     }
 })
 
